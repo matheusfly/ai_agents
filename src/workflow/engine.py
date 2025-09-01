@@ -22,23 +22,19 @@ class WorkflowEngine:
     def __init__(self):
         # Initialize agents
         self.reasoning_agent = SeniorReasoningAgent(
-            model=settings.QWEN_MODEL,
-            base_url=settings.OLLAMA_BASE_URL
+            model=settings.QWEN_MODEL
         )
         
         self.delegation_agent = TaskDelegationAgent(
-            model=settings.GEMMA_MODEL,
-            base_url=settings.OLLAMA_BASE_URL
+            model=settings.GEMMA_MODEL
         )
         
         self.xml_agent = XMLFormatterAgent(
-            model=settings.GEMMA_MODEL,
-            base_url=settings.OLLAMA_BASE_URL
+            model=settings.GEMMA_MODEL
         )
         
         self.qa_agent = QualityAssuranceAgent(
-            model=settings.QWEN_MODEL,
-            base_url=settings.OLLAMA_BASE_URL
+            model=settings.QWEN_MODEL
         )
         
         # Initialize human review system

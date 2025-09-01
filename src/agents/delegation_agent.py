@@ -1,14 +1,15 @@
 from typing import Dict, Any
 from .base import BaseAgent
-from src.utils import create_verbose_log
+from src.utils.helpers import create_verbose_log
+from langchain_core.messages import SystemMessage, HumanMessage
 
 
 class TaskDelegationAgent(BaseAgent):
     """Task Delegation Specialist that creates detailed XML-formatted task delegation plans."""
-    
-    def __init__(self, model: str, base_url: str = "http://localhost:11434"):
-        super().__init__("Task Delegation Specialist", model, base_url)
-    
+
+    def __init__(self, model: str):
+        super().__init__("Task Delegation Specialist", model)
+
     def get_system_prompt(self) -> str:
         return """You are a Task Delegation Specialist. Your role is to create XML-formatted task delegation plans:
 
@@ -34,12 +35,12 @@ class TaskDelegationAgent(BaseAgent):
 </delegation>
 
 Ensure all tasks are properly sequenced and dependencies are correctly identified."""
-    
+
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Process the task delegation task."""
         # Get the problem analysis
         problem_analysis = state.get("problem_analysis", "")
-        
+
         # Create the prompt for the LLM
         prompt = f"""Based on the following problem analysis, create a detailed task delegation plan with XML formatting:
 
@@ -50,17 +51,20 @@ Ensure all tasks are properly sequenced and dependencies are correctly identifie
 Assign specific subtasks to appropriate agents based on complexity, domain expertise, and model capabilities. Define clear input requirements, output specifications, validation rules, and dependencies for each task."""
 
         # Call the LLM
-        response = self.call_llm(prompt, self.get_system_prompt())
-        
+        response = self.llm.invoke([
+            SystemMessage(content=self.get_system_prompt()),
+            HumanMessage(content=prompt)
+        ])
+
         # Format the output
         formatted_output = self.format_output(response)
-        
+
         # Create verbose log
         verbose_log = create_verbose_log(
-            self.name, 
+            self.name,
             f"Completed task delegation with {len(formatted_output)} characters of output"
         )
-        
+
         # Return updated state
         return {
             "task_delegation": formatted_output,

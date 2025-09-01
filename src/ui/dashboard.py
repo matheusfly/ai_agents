@@ -218,94 +218,100 @@ with col2:
         except:
             st.write("Unable to fetch session status")
 
+# --- Helper Functions for UI ---
+def get_llm_events(session_id):
+    if not session_id:
+        return []
+    try:
+        response = requests.get(f"{API_BASE_URL}/llm-events/{session_id}")
+        if response.status_code == 200:
+            return response.json().get("events", [])
+    except Exception as e:
+        st.error(f"Failed to fetch LLM events: {e}")
+    return []
+
+def render_llm_events(events):
+    st.header("LLM Call Tracing")
+    if not events:
+        st.info("No LLM calls yet. Process a prompt to see real-time tracing.")
+        return
+
+    # Group events by run_id
+    runs = {}
+    for event in events:
+        run_id = event.get("run_id")
+        if run_id not in runs:
+            runs[run_id] = []
+        runs[run_id].append(event)
+
+    for run_id, run_events in runs.items():
+        start_event = run_events[0]
+        end_event = run_events[-1] if run_events[-1]['type'] == 'llm_end' else None
+
+        with st.expander(f"Run ID: {run_id} ({start_event.get('agent_type', 'unknown')})", expanded=True):
+            st.metric("Model", start_event.get('model', 'N/A'))
+            if end_event:
+                st.metric("Duration", f"{end_event.get('duration', 0):.2f}s")
+                st.metric("Total Tokens", end_event.get('total_tokens', 0))
+
+            # Token stream
+            token_stream = "".join([e['token'] for e in run_events if e['type'] == 'llm_token'])
+            st.text_area("Token Stream", token_stream, height=150)
+
+
 # Results section
 if st.session_state.result:
     st.header("📋 Results")
-    
+
     # Tabs for different outputs
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "Problem Analysis", 
-        "Task Delegation", 
-        "XML Validation", 
-        "QA Report", 
-        "Final Output",
-        "Visualizations"
-    ])
-    
+    tab_titles = [
+        "Problem Analysis", "Task Delegation", "XML Validation",
+        "QA Report", "Final Output", "Visualizations", "LLM Tracing"
+    ]
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(tab_titles)
+
     with tab1:
+        # ... (existing code for tab1)
         st.subheader("Problem Analysis")
         analysis = st.session_state.result.get("problem_analysis", "No analysis available")
         st.text_area("Problem Analysis Content", value=analysis, height=300, key="analysis", label_visibility="collapsed")
-    
+
     with tab2:
+        # ... (existing code for tab2)
         st.subheader("Task Delegation")
         delegation = st.session_state.result.get("task_delegation", "No delegation plan available")
         st.text_area("Task Delegation Content", value=delegation, height=300, key="delegation", label_visibility="collapsed")
-    
+
     with tab3:
+        # ... (existing code for tab3)
         st.subheader("XML Validation")
         validation = st.session_state.result.get("xml_validation", "No validation report available")
         st.text_area("XML Validation Content", value=validation, height=300, key="validation", label_visibility="collapsed")
-    
+
     with tab4:
+        # ... (existing code for tab4)
         st.subheader("QA Report")
         qa_report = st.session_state.result.get("final_qa_report", "No QA report available")
         st.text_area("QA Report Content", value=qa_report, height=300, key="qa_report", label_visibility="collapsed")
-    
+
     with tab5:
+        # ... (existing code for tab5)
         st.subheader("Final Output")
-        # Extract final output from QA report
         final_output = "Final output would be extracted from the QA report"
         st.text_area("Final Output Content", value=final_output, height=300, key="final_output", label_visibility="collapsed")
-    
+
     with tab6:
+        # ... (existing code for tab6)
         st.subheader("Workflow Visualization")
-        
-        # Create a simple workflow DAG visualization
-        st.write("### Workflow DAG")
-        # Create a simple representation using Streamlit's graphviz
         st.graphviz_chart('''
             digraph {
-                "User Input" -> "Senior Reasoning Agent"
-                "Senior Reasoning Agent" -> "Task Delegation Specialist"
-                "Task Delegation Specialist" -> "XML Formatter & Validator"
-                "XML Formatter & Validator" -> "Quality Assurance Specialist"
-                "Quality Assurance Specialist" -> "Human Review"
-                "Quality Assurance Specialist" -> "Final Output"
-                "Human Review" -> "Final Output"
+                "User Input" -> "Senior Reasoning Agent" -> "Task Delegation Specialist" -> "XML Formatter & Validator" -> "Quality Assurance Specialist" -> "Final Output";
             }
         ''')
-        
-        # Performance timeline
-        if st.session_state.logs:
-            st.write("### Performance Timeline")
-            # Create a simple timeline using DataFrame
-            log_data = []
-            for log in st.session_state.logs:
-                log_data.append({
-                    "Agent": log.get("agent", "Unknown"),
-                    "Message": log.get("message", "")[:50] + "..." if len(log.get("message", "")) > 50 else log.get("message", ""),
-                    "Timestamp": log.get("timestamp", "")
-                })
-            
-            df = pd.DataFrame(log_data)
-            st.dataframe(df)
-        
-        # Log level distribution
-        st.write("### Log Level Distribution")
-        if st.session_state.logs:
-            level_counts = {}
-            for log in st.session_state.logs:
-                level = log.get("type", "info")
-                level_counts[level] = level_counts.get(level, 0) + 1
-            
-            if level_counts:
-                fig = px.pie(
-                    values=list(level_counts.values()),
-                    names=list(level_counts.keys()),
-                    title="Log Level Distribution"
-                )
-                st.plotly_chart(fig)
+
+    with tab7:
+        llm_events = get_llm_events(st.session_state.session_id)
+        render_llm_events(llm_events)
 
 # Logs section
 st.header("📝 Agent Logs")
@@ -359,9 +365,9 @@ if st.session_state.session_id and not st.session_state.processing:
 # SSE connection for real-time updates
 if st.session_state.sse_active and st.session_state.session_id:
     # This is a simplified approach using periodic polling
-    # In a real implementation, you would use JavaScript to handle SSE
     time.sleep(2)
     try:
+        # Poll for session status
         response = requests.get(f"{API_BASE_URL}/session/{st.session_state.session_id}")
         if response.status_code == 200:
             session_data = response.json()
@@ -372,8 +378,20 @@ if st.session_state.sse_active and st.session_state.session_id:
                 st.session_state.processing = False
                 st.session_state.result = session_data["result"]
                 st.session_state.sse_active = False
-    except:
-        pass
+
+        # Poll for LLM events for streaming
+        llm_events = get_llm_events(st.session_state.session_id)
+        if llm_events:
+            # Get the latest run
+            latest_run_id = llm_events[-1].get("run_id")
+            if latest_run_id:
+                token_stream = "".join([e['token'] for e in llm_events if e['type'] == 'llm_token' and e['run_id'] == latest_run_id])
+                # Display streaming response
+                if token_stream:
+                    st.text_area("Live Response Stream:", value=token_stream, height=150)
+
+    except Exception as e:
+        st.error(f"Error during polling: {e}")
     
     # Rerun to update the UI
     st.rerun()

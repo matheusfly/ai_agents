@@ -1,14 +1,15 @@
 from typing import Dict, Any
 from .base import BaseAgent
-from src.utils import create_verbose_log
+from src.utils.helpers import create_verbose_log
+from langchain_core.messages import SystemMessage, HumanMessage
 
 
 class SeniorReasoningAgent(BaseAgent):
     """Senior Reasoning Agent that breaks down complex problems into step-by-step reasoning processes."""
-    
-    def __init__(self, model: str, base_url: str = "http://localhost:11434"):
-        super().__init__("Senior Reasoning Agent", model, base_url)
-    
+
+    def __init__(self, model: str):
+        super().__init__("Senior Reasoning Agent", model)
+
     def get_system_prompt(self) -> str:
         return """You are a Senior Reasoning Agent. Your role is to break down complex problems into step-by-step reasoning processes. Always use XML tags for structured output:
 
@@ -34,12 +35,12 @@ class SeniorReasoningAgent(BaseAgent):
 </conclusion>
 
 Ensure all XML is properly nested and validated."""
-    
+
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Process the problem analysis task."""
         # Get the user input
         user_input = state.get("messages", [""])[-1] if state.get("messages") else ""
-        
+
         # Create the prompt for the LLM
         prompt = f"""Analyze the following problem in detail and break it down into explicit step-by-step reasoning processes:
 
@@ -48,17 +49,20 @@ Ensure all XML is properly nested and validated."""
 Provide a comprehensive reasoning structure with input requirements and expected outputs for each step. Use the XML format specified in your system prompt."""
 
         # Call the LLM
-        response = self.call_llm(prompt, self.get_system_prompt())
-        
+        response = self.llm.invoke([
+            SystemMessage(content=self.get_system_prompt()),
+            HumanMessage(content=prompt)
+        ])
+
         # Format the output
         formatted_output = self.format_output(response)
-        
+
         # Create verbose log
         verbose_log = create_verbose_log(
-            self.name, 
+            self.name,
             f"Completed problem analysis with {len(formatted_output)} characters of output"
         )
-        
+
         # Return updated state
         return {
             "problem_analysis": formatted_output,
