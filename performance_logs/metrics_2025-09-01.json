@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2025-09-01T12:20:08.776685",
+    "agent_name": "workflow_engine",
+    "execution_time": 287.42324900627136,
+    "input_size": 1242,
+    "output_size": 26758,
+    "throughput": 93.09615729594707
+  }
+]

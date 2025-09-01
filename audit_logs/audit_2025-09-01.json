@@ -1,0 +1,38 @@
+[
+  {
+    "timestamp": "2025-09-01T12:10:51.495804",
+    "event_type": "prompt_processing",
+    "user_id": "anonymous",
+    "details": {
+      "session_id": "14dc87af-7210-4fa6-a7bd-0462528b47df",
+      "prompt_length": 1336
+    }
+  },
+  {
+    "timestamp": "2025-09-01T12:11:52.866427",
+    "event_type": "prompt_processing",
+    "user_id": "anonymous",
+    "details": {
+      "session_id": "19e5f221-4d39-457c-8394-5106ba2a179e",
+      "prompt_length": 1242
+    }
+  },
+  {
+    "timestamp": "2025-09-01T12:15:21.349467",
+    "event_type": "prompt_processing",
+    "user_id": "anonymous",
+    "details": {
+      "session_id": "0b72ffe8-6b42-4f06-a432-b7920a806595",
+      "prompt_length": 1242
+    }
+  },
+  {
+    "timestamp": "2025-09-01T12:20:08.774243",
+    "event_type": "workflow_completed",
+    "user_id": "anonymous",
+    "details": {
+      "session_id": "0b72ffe8-6b42-4f06-a432-b7920a806595",
+      "result_length": 26758
+    }
+  }
+]

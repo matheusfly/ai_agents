@@ -1,0 +1,11 @@
+[
+  {
+    "timestamp": "2025-08-31T15:19:35.693051",
+    "event_type": "prompt_processing",
+    "user_id": "anonymous",
+    "details": {
+      "session_id": "13474325-8c55-4cb2-9e72-8e17f4ccab2e",
+      "prompt_length": 63
+    }
+  }
+]

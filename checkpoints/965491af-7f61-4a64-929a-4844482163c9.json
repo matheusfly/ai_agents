@@ -1,0 +1,19 @@
+{
+  "state": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Create a Python function to calculate the factorial of a number"
+      }
+    ],
+    "problem_analysis": "",
+    "task_delegation": "",
+    "xml_validation": "",
+    "final_qa_report": "",
+    "human_review_required": false,
+    "human_feedback": "",
+    "verbose_logs": []
+  },
+  "timestamp": 1756664375.69489,
+  "status": "started"
+}
