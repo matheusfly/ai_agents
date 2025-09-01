@@ -580,10 +580,18 @@ async def run_workflow(session_id: str, prompt: str, user_id: str):
         
         # Log error
         security_manager.log_audit_event(
-            "workflow_error", 
-            user_id, 
+            "workflow_error",
+            user_id,
             {"session_id": session_id, "error": str(e)}
         )
+
+
+@app.get("/llm-events/{session_id}")
+async def get_llm_events(session_id: str):
+    """Get LLM events for a given session_id."""
+    from src.utils.websocket import websocket_manager
+    events = websocket_manager.get_events(session_id)
+    return {"events": events}
 
 
 if __name__ == "__main__":

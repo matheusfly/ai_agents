@@ -1,15 +1,15 @@
 from typing import Dict, Any
 from .base import BaseAgent
-from src.utils import create_verbose_log, validate_xml_structure
-import xml.etree.ElementTree as ET
+from src.utils.helpers import create_verbose_log
+from langchain_core.messages import SystemMessage, HumanMessage
 
 
 class XMLFormatterAgent(BaseAgent):
     """XML Formatter & Validator that ensures all inputs and outputs follow strict XML formatting standards."""
-    
-    def __init__(self, model: str, base_url: str = "http://localhost:11434"):
-        super().__init__("XML Formatter & Validator", model, base_url)
-    
+
+    def __init__(self, model: str):
+        super().__init__("XML Formatter & Validator", model)
+
     def get_system_prompt(self) -> str:
         return """You are an XML Formatter & Validator. Your role is to validate and format all inputs and outputs using XML:
 
@@ -39,12 +39,12 @@ class XMLFormatterAgent(BaseAgent):
 </validation>
 
 Always provide the corrected XML if issues are found."""
-    
+
     def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Process the XML validation task."""
         # Get the task delegation
         task_delegation = state.get("task_delegation", "")
-        
+
         # Create the prompt for the LLM
         prompt = f"""Validate and format the following task delegation plan according to XML standards:
 
@@ -55,17 +55,20 @@ Always provide the corrected XML if issues are found."""
 Check for proper nesting, correct tag usage, attribute completeness, and data type consistency. Provide corrected XML if issues are found."""
 
         # Call the LLM
-        response = self.call_llm(prompt, self.get_system_prompt())
-        
+        response = self.llm.invoke([
+            SystemMessage(content=self.get_system_prompt()),
+            HumanMessage(content=prompt)
+        ])
+
         # Format the output
         formatted_output = self.format_output(response)
-        
+
         # Create verbose log
         verbose_log = create_verbose_log(
-            self.name, 
+            self.name,
             f"Completed XML validation with {len(formatted_output)} characters of output"
         )
-        
+
         # Return updated state
         return {
             "xml_validation": formatted_output,
